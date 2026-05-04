@@ -103,6 +103,9 @@ stages:
     pool:
       vmImage: 'windows-latest'
 
+    variables:
+      NUGET_PACKAGES: $(Pipeline.Workspace)/.nuget/packages
+
     steps:
 
     - checkout: self # self represents the repo where the initial Pipelines YAML file was found
@@ -126,6 +129,15 @@ stages:
     - template: '.build/azure-templates/install-dotnet-sdk.yml'
       parameters:
         sdkVersion: '$(DotNetSDKVersion)'
+
+    - task: Cache@2
+      displayName: 'Cache NuGet packages'
+      inputs:
+        key: 'nuget | "$(Agent.OS)" | **/*.csproj | **/*.props | **/*.targets | global.json'
+        restoreKeys: |
+          nuget | "$(Agent.OS)"
+          nuget
+        path: $(NUGET_PACKAGES)
 
     - pwsh: |
         Import-Module "$(BuildDirectory)/psake/psake.psm1"
